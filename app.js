@@ -72,6 +72,9 @@ cargarTema();
 const obtenerSeries = async () => {
     const url = `${BASE_URL}/tv/popular?api_key=${API_KEY}&language=es-ES`;
     const respuesta = await fetch(url);
+    if (!respuesta.ok) {
+        throw new Error(`HTTP error! status: ${respuesta.status}`);
+    }
     const datos = await respuesta.json();
     return datos.results;
 };
@@ -100,12 +103,25 @@ const mostrarSeries = (series) => {
     resultsCount.textContent = `${series.length} resultados`;
 };
 
+const manejarError = (error) => {
+    console.error('❌ Error:', error.message);
+    if (error.message.includes('401')) {
+        mostrarError('API Key inválida');
+    } else {
+        mostrarError('Error de conexión');
+    }
+};
+
 const iniciar = async () => {
-    mostrarLoading();
-    const series = await obtenerSeries();
-    ocultarLoading();
-    resultsTitle.textContent = 'Series Populares';
-    mostrarSeries(series);
+    try {
+        mostrarLoading();
+        const series = await obtenerSeries();
+        ocultarLoading();
+        resultsTitle.textContent = 'Series Populares';
+        mostrarSeries(series);
+    } catch (error) {
+        manejarError(error);
+    }
 };
 
 iniciar();
@@ -113,6 +129,9 @@ iniciar();
 const buscarSeries = async (texto) => {
     const url = `${BASE_URL}/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(texto)}&language=es-ES`;
     const respuesta = await fetch(url);
+    if (!respuesta.ok) {
+        throw new Error(`HTTP error! status: ${respuesta.status}`);
+    }
     const datos = await respuesta.json();
     return datos.results;
 };
@@ -127,11 +146,15 @@ searchInput.addEventListener('input', () => {
             iniciar();
             return;
         }
-        mostrarLoading();
-        const series = await buscarSeries(texto);
-        ocultarLoading();
-        resultsTitle.textContent = `Resultados para "${texto}"`;
-        mostrarSeries(series);
+        try {
+            mostrarLoading();
+            const series = await buscarSeries(texto);
+            ocultarLoading();
+            resultsTitle.textContent = `Resultados para "${texto}"`;
+            mostrarSeries(series);
+        } catch (error) {
+            manejarError(error);
+        }
     }, 500);
 });
 
@@ -143,6 +166,9 @@ clearBtn.addEventListener('click', () => {
 const obtenerDetalle = async (id) => {
     const url = `${BASE_URL}/tv/${id}?api_key=${API_KEY}&language=es-ES`;
     const respuesta = await fetch(url);
+    if (!respuesta.ok) {
+        throw new Error(`HTTP error! status: ${respuesta.status}`);
+    }
     const datos = await respuesta.json();
     return datos;
 };
@@ -172,9 +198,15 @@ const cerrarModal = () => {
 seriesGrid.addEventListener('click', async (event) => {
     const tarjeta = event.target.closest('.serie-card');
     if (!tarjeta) return;
-    const serie = await obtenerDetalle(tarjeta.dataset.id);
-    mostrarDetalle(serie);
+    try {
+        const serie = await obtenerDetalle(tarjeta.dataset.id);
+        mostrarDetalle(serie);
+    } catch (error) {
+        manejarError(error);
+    }
 });
 
 modalClose.addEventListener('click', cerrarModal);
 modalOverlay.addEventListener('click', cerrarModal);
+
+retryBtn.addEventListener('click', iniciar);
