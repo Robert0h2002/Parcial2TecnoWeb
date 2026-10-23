@@ -77,12 +77,12 @@ const obtenerSeries = async () => {
 };
 
 const crearTarjeta = (serie) => {
-    const { name, first_air_date, vote_average, poster_path } = serie;
+    const { id, name, first_air_date, vote_average, poster_path } = serie;
     const año = first_air_date ? first_air_date.split('-')[0] : 'N/A';
     const imagen = poster_path ? `${IMAGE_URL}${poster_path}` : '';
     const rating = vote_average ? vote_average.toFixed(1) : 'N/A';
     return `
-        <article class="serie-card">
+        <article class="serie-card" data-id="${id}">
             <div class="serie-card__poster">
                 <img class="serie-card__image" src="${imagen}" alt="${name}">
                 <span class="serie-card__rating">⭐ ${rating}</span>
@@ -139,3 +139,42 @@ clearBtn.addEventListener('click', () => {
     searchInput.value = '';
     iniciar();
 });
+
+const obtenerDetalle = async (id) => {
+    const url = `${BASE_URL}/tv/${id}?api_key=${API_KEY}&language=es-ES`;
+    const respuesta = await fetch(url);
+    const datos = await respuesta.json();
+    return datos;
+};
+
+const mostrarDetalle = (serie) => {
+    const { name, first_air_date, overview, number_of_seasons, number_of_episodes, genres, status } = serie;
+    const año = first_air_date ? first_air_date.split('-')[0] : 'N/A';
+    const generos = genres.map((genero) => genero.name).join(', ');
+    modalBody.innerHTML = `
+        <h2 class="modal__title">${name}</h2>
+        <p class="modal__subtitle">📅 ${año}</p>
+        <div class="modal__info">
+            <span>📺 ${number_of_seasons} temporadas</span>
+            <span>🎬 ${number_of_episodes} episodios</span>
+            <span>📌 ${status}</span>
+        </div>
+        <p><strong>Géneros:</strong> ${generos || 'N/A'}</p>
+        <p class="modal__overview">${overview || 'Sin sinopsis disponible'}</p>
+    `;
+    modal.classList.add('modal--show');
+};
+
+const cerrarModal = () => {
+    modal.classList.remove('modal--show');
+};
+
+seriesGrid.addEventListener('click', async (event) => {
+    const tarjeta = event.target.closest('.serie-card');
+    if (!tarjeta) return;
+    const serie = await obtenerDetalle(tarjeta.dataset.id);
+    mostrarDetalle(serie);
+});
+
+modalClose.addEventListener('click', cerrarModal);
+modalOverlay.addEventListener('click', cerrarModal);
