@@ -69,6 +69,7 @@ cargarTema();
 // #                                                                          #
 // ############################################################################
 
+// el ejercicio 1 y 2 estan en el commit del ejercicio 1
 const obtenerSeries = async () => {
     const url = `${BASE_URL}/tv/popular?api_key=${API_KEY}&language=es-ES`;
     const respuesta = await fetch(url);
