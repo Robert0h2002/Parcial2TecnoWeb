@@ -104,7 +104,38 @@ const iniciar = async () => {
     mostrarLoading();
     const series = await obtenerSeries();
     ocultarLoading();
+    resultsTitle.textContent = 'Series Populares';
     mostrarSeries(series);
 };
 
 iniciar();
+
+const buscarSeries = async (texto) => {
+    const url = `${BASE_URL}/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(texto)}&language=es-ES`;
+    const respuesta = await fetch(url);
+    const datos = await respuesta.json();
+    return datos.results;
+};
+
+let timeout;
+
+searchInput.addEventListener('input', () => {
+    clearTimeout(timeout);
+    const texto = searchInput.value.trim();
+    timeout = setTimeout(async () => {
+        if (texto === '') {
+            iniciar();
+            return;
+        }
+        mostrarLoading();
+        const series = await buscarSeries(texto);
+        ocultarLoading();
+        resultsTitle.textContent = `Resultados para "${texto}"`;
+        mostrarSeries(series);
+    }, 500);
+});
+
+clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    iniciar();
+});
